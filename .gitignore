@@ -28,3 +28,8 @@ npm-debug.log*
 
 # Test output
 coverage/
+
+# Test data (contains real Slack messages)
+test-data/historical-messages.json
+test-data/test-cases.json
+test-data/eval-results.md

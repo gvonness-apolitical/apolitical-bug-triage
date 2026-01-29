@@ -86,7 +86,7 @@ npm run triage:dry -- -v
 npm run triage:dry -- --since $(date -v-1d +%s)
 
 # Use Opus for production quality
-npm run triage -- --model claude-opus-4-5-20250514
+npm run triage -- --model claude-opus-4-5-20251101
 
 # Process only 3 messages
 npm run triage:dry -- --limit 3
@@ -119,6 +119,77 @@ Claude routes bugs to teams based on keywords:
 ### State Management
 
 The script saves its last run timestamp to `.last-run` to avoid reprocessing messages.
+
+## Prompt Evaluation
+
+The project includes an evaluation framework for testing and refining the triage prompt.
+
+### Setup Test Cases
+
+```bash
+# 1. Export historical messages from #bug-hunt
+npm run eval:export
+
+# 2. Generate test case file with placeholders
+npm run eval:generate
+
+# 3. Merge synthetic edge cases
+npm run eval:merge-synthetic
+```
+
+### Label Test Cases
+
+Edit `test-data/test-cases.json` and fill in expected outcomes:
+
+```json
+{
+  "expected": {
+    "action": "new_bug",      // existing_ticket | new_bug | not_a_bug | needs_info
+    "team": "platform",       // platform | enterprise | ai | data (if new_bug)
+    "confidence": "high",     // optional
+    "notes": "Clear bug with stack trace"
+  }
+}
+```
+
+### Run Evaluation
+
+```bash
+# Run with Opus (production model)
+npm run eval:run:opus
+
+# Run with specific options
+npm run eval:run -- --model claude-sonnet-4-20250514 --limit 10
+
+# Evaluate a single case
+npm run eval:run -- --case synth-clear-bug-stacktrace
+
+# Skip unlabeled cases
+npm run eval:run -- --skip-unlabeled
+```
+
+### Review Results
+
+Results are written to `test-data/eval-results.md` with:
+- Summary accuracy metrics
+- Per-case comparison table
+- Detailed failure analysis
+
+### Iteration Workflow
+
+1. Run evaluation: `npm run eval:run:opus`
+2. Review failures in `test-data/eval-results.md`
+3. Identify patterns in misclassifications
+4. Update prompt in `src/triage.ts`
+5. Re-run evaluation
+6. Repeat until satisfied
+
+### Test Data Files
+
+- `test-data/historical-messages.json` - Exported messages from #bug-hunt
+- `test-data/synthetic-cases.json` - Hand-crafted edge cases
+- `test-data/test-cases.json` - Combined test set with expected outcomes
+- `test-data/eval-results.md` - Latest evaluation results
 
 ## Development
 

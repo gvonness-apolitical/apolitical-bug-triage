@@ -1,0 +1,177 @@
+{
+  "description": "Synthetic test cases for edge coverage. Merge these into test-cases.json manually or via script.",
+  "cases": [
+    {
+      "id": "synth-clear-bug-stacktrace",
+      "source": "synthetic",
+      "message": "Getting a 500 error when trying to save an article. Here's the stack trace:\n\nTypeError: Cannot read property 'id' of undefined\n    at ArticleService.save (/app/src/services/article.ts:142:23)\n    at async ArticleController.update (/app/src/controllers/article.ts:67:5)",
+      "reporter": "Test Engineer",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "high",
+        "notes": "Clear bug with stack trace - should be new_bug"
+      }
+    },
+    {
+      "id": "synth-feature-request",
+      "source": "synthetic",
+      "message": "It would be really nice if we could export articles to PDF. Our enterprise clients keep asking for this feature.",
+      "reporter": "Account Manager",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "not_a_bug",
+        "team": null,
+        "confidence": "high",
+        "notes": "Feature request, not a bug"
+      }
+    },
+    {
+      "id": "synth-support-question",
+      "source": "synthetic",
+      "message": "How do I add a new user to our academy? I can't find the button anywhere.",
+      "reporter": "Client Success",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "not_a_bug",
+        "team": null,
+        "confidence": "high",
+        "notes": "Support question about how to use the product"
+      }
+    },
+    {
+      "id": "synth-vague-report",
+      "source": "synthetic",
+      "message": "Something is wrong with the homepage. It looks weird.",
+      "reporter": "Someone",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "needs_info",
+        "team": null,
+        "confidence": "medium",
+        "notes": "Too vague to act on - needs more info"
+      }
+    },
+    {
+      "id": "synth-known-issue-duplicate",
+      "source": "synthetic",
+      "message": "Users are seeing a blank screen after login on mobile Safari",
+      "reporter": "QA",
+      "mockLinearResults": [
+        {
+          "identifier": "APO-1234",
+          "title": "Mobile Safari blank screen after authentication",
+          "state": "In Progress",
+          "team": "Platform",
+          "url": "https://linear.app/apolitical/issue/APO-1234"
+        }
+      ],
+      "expected": {
+        "action": "existing_ticket",
+        "team": null,
+        "confidence": "high",
+        "notes": "Clear duplicate of existing in-progress ticket"
+      }
+    },
+    {
+      "id": "synth-ai-feedback-bug",
+      "source": "synthetic",
+      "message": "The AI feedback on learning tracks is giving completely irrelevant suggestions. It recommended a climate policy article for someone studying digital transformation.",
+      "reporter": "Product Manager",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "ai",
+        "confidence": "high",
+        "notes": "AI feature bug - should route to AI team"
+      }
+    },
+    {
+      "id": "synth-data-pipeline-issue",
+      "source": "synthetic",
+      "message": "ThoughtSpot dashboard is showing yesterday's data even though it's 3pm. The dbt job might have failed.",
+      "reporter": "Data Analyst",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "data",
+        "confidence": "high",
+        "notes": "Data pipeline issue - should route to Data team"
+      }
+    },
+    {
+      "id": "synth-academy-admin-bug",
+      "source": "synthetic",
+      "message": "When I try to add more than 50 users to a cohort, the page crashes and I lose all my work. This is blocking our enterprise onboarding.",
+      "reporter": "Enterprise Success",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "enterprise",
+        "confidence": "high",
+        "notes": "Enterprise/academy bug with user impact - high priority"
+      }
+    },
+    {
+      "id": "synth-intermittent-issue",
+      "source": "synthetic",
+      "message": "Sometimes the search doesn't return any results even though I know the article exists. Refreshing usually fixes it.",
+      "reporter": "Content Editor",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "medium",
+        "notes": "Intermittent bug - valid but hard to reproduce"
+      }
+    },
+    {
+      "id": "synth-user-error",
+      "source": "synthetic",
+      "message": "I can't log in to my account. It says my password is wrong but I'm sure I'm using the right one.",
+      "reporter": "User",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "not_a_bug",
+        "team": null,
+        "confidence": "medium",
+        "notes": "Likely user error - password reset, not a bug"
+      }
+    },
+    {
+      "id": "synth-related-but-different",
+      "source": "synthetic",
+      "message": "The carousel is showing duplicate articles. Same article appears 3 times.",
+      "reporter": "QA",
+      "mockLinearResults": [
+        {
+          "identifier": "APO-5678",
+          "title": "Carousel not refreshing with new content",
+          "state": "Done",
+          "team": "Platform",
+          "url": "https://linear.app/apolitical/issue/APO-5678"
+        }
+      ],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "medium",
+        "notes": "Related but different issue - duplicates vs not refreshing"
+      }
+    },
+    {
+      "id": "synth-screenshot-reference",
+      "source": "synthetic",
+      "message": "See screenshot - the button is cut off on mobile. Can't click it.",
+      "reporter": "User",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "medium",
+        "notes": "Valid bug report even without seeing the screenshot"
+      }
+    }
+  ]
+}
