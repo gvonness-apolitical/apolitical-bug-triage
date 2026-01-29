@@ -18,6 +18,7 @@
     "eval:label": "tsx scripts/label-cases.ts",
     "eval:enrich": "tsx scripts/enrich-with-threads.ts",
     "eval:analyze": "tsx scripts/analyze-threads.ts",
+    "eval:claude-label": "tsx scripts/claude-label.ts",
     "eval:refresh": "tsx scripts/refresh-historical.ts",
     "eval:archive": "tsx scripts/archive-eval.ts",
     "eval:diff": "tsx scripts/eval-diff.ts",
