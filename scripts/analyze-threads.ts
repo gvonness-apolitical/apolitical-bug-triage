@@ -270,14 +270,19 @@ function main(): void {
     console.log();
   }
 
-  // Apply high-confidence suggestions if requested
+  // Apply suggestions if requested
   if (shouldApply) {
+    const includeMedium = args.includes('--medium');
+    const toApply = includeMedium ? [...highConf, ...medConf] : highConf;
+    const confLabel = includeMedium ? 'high and medium' : 'high';
+
     let applied = 0;
-    for (const { testCase, suggestion } of highConf) {
+    for (const { testCase, suggestion } of toApply) {
       if (testCase.expected.action === null) {
         testCase.expected.action = suggestion.action;
         testCase.expected.team = suggestion.team ?? null;
-        testCase.expected.notes = `Auto-labeled: ${suggestion.reason}`;
+        testCase.expected.confidence = suggestion.confidence;
+        testCase.expected.notes = `Auto-labeled (${suggestion.confidence}): ${suggestion.reason}`;
         applied++;
       }
     }
@@ -285,12 +290,13 @@ function main(): void {
     if (applied > 0) {
       testFile.generated = new Date().toISOString();
       writeFileSync(casesPath, JSON.stringify(testFile, null, 2));
-      console.log(`\n✓ Applied ${applied} high-confidence suggestions.`);
+      console.log(`\n✓ Applied ${applied} ${confLabel}-confidence suggestions.`);
     } else {
-      console.log('\nNo new labels to apply (high-confidence cases may already be labeled).');
+      console.log(`\nNo new labels to apply (${confLabel}-confidence cases may already be labeled).`);
     }
   } else {
     console.log('Run with --apply to auto-label high-confidence suggestions.');
+    console.log('Run with --apply --medium to also include medium-confidence.');
   }
 }
 
