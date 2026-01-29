@@ -2,3 +2,4 @@
 test-data/historical-messages.json filter=git-crypt diff=git-crypt
 test-data/test-cases.json filter=git-crypt diff=git-crypt
 test-data/eval-results.md filter=git-crypt diff=git-crypt
+test-data/eval-archive/*.md filter=git-crypt diff=git-crypt
