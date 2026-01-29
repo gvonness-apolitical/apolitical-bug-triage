@@ -8,7 +8,7 @@ import { teamKeywords } from './config.js';
 import type { LinearIssue } from './linear.js';
 
 export interface TriageDecision {
-  action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info';
+  action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info' | 'defer';
   explanation: string;
   confidence: 'high' | 'medium' | 'low';
   ticketLink?: string;
@@ -59,26 +59,72 @@ ${existingIssuesText}
 
 Route bugs to the appropriate team based on the affected area:
 
-- **Platform**: Infrastructure, GKE, Kubernetes, deployments, CI/CD, databases, performance, Auth0, authentication, OpenFGA, authorization, scaling
-- **Enterprise**: Academies, cohorts, admin UI/API, B2B features, white-label, SSO, SAML
+- **Platform**: Infrastructure, authentication (Auth0, login, password reset), performance, search, notifications, emails, content publishing, caching, core UI/UX issues
+- **Enterprise**: Academies, cohorts, admin UI/API, B2B features, communities, courses (enrollment, progress, completion), partner/client-specific issues
 - **AI**: AI features, LLMs, Futura, learning tracks, AI feedback, moderation, chatbots
 - **Data**: dbt, BigQuery, ThoughtSpot, analytics, reporting, dashboards, data pipelines
 
+**Default to Platform** if the area is unclear. Enterprise is for academy/cohort/community-specific features.
+
 ## Your Task
 
-Analyze this bug report and decide the appropriate action:
+Analyze this bug report and decide the appropriate action. BE VERY CONSERVATIVE.
 
-1. **existing_ticket** - This appears to be a duplicate or closely related to an existing Linear ticket
-2. **new_bug** - This is a genuine new bug that needs a ticket created
-3. **not_a_bug** - This is a support question, feature request, user error, or not actually a bug
-4. **needs_info** - Cannot determine without more information from the reporter
+### Actions
+
+**defer** (DEFAULT) - Use this when ANY of these apply:
+- You're not 100% certain what the right action is
+- Could be a bug OR a support/config issue
+- Could be user error OR a real problem
+- The reporter is uncertain ("not sure if this is a bug", "is this expected?")
+- It's about a specific user's issue (could be account-specific)
+- Framed as a question ("Have we changed...?", "Is this a bug?")
+- References previous context you don't have ("same issue as above")
+
+This is the SAFE default. A human will review and decide.
+
+**new_bug** - ONLY when ALL of these are true:
+- Clearly describes broken functionality (not "might be broken")
+- Affects the product broadly (not one user's account)
+- Has enough detail: what's broken, where, what happens
+- You have HIGH confidence this is a product bug
+
+**existing_ticket** - ONLY if a Linear ticket above is clearly the SAME issue (not just related topic)
+
+**not_a_bug** - ONLY when CLEARLY one of:
+- Explicit feature request ("it would be nice if...")
+- How-to question ("how do I...")
+- Content/copy error (typo, wrong text - not a technical bug)
+
+**needs_info** - RARELY USE THIS. Only when the message is SO vague you cannot even defer meaningfully:
+- Just a link with no description
+- "There's an issue" with zero context
+- Screenshot reference with no explanation
+
+DO NOT use needs_info just because you want more detail. If you understand the general problem but are unsure how to act, use **defer** instead.
+
+## Examples
+
+**defer**: "Users can't enroll in the course" - Could be a bug OR permissions/config issue
+**defer**: "Getting errors when posting" - Need to investigate if it's a bug or user-specific
+**defer**: "Have we changed something on the homepage?" - Reporter is uncertain
+**defer**: "Same login issue as before" - References context we don't have
+
+**new_bug**: "403 error on /events page for logged-out users, reproducible" - Clear, specific, actionable
+**new_bug**: "Search returns no results for 'leadership' - returns empty on Firefox and Chrome" - Clear broken functionality
+
+**not_a_bug**: "Can you help reset Sarah's password?" - Support request
+**not_a_bug**: "It would be great if we could filter by date" - Feature request
+
+**needs_info**: "I'm getting this" (with no other context) - Genuinely cannot understand the issue
+**needs_info**: "Check this thread: [link]" - No description at all
 
 ## Response Format
 
-Respond with ONLY a JSON object (no markdown code blocks, no explanation outside the JSON):
+Respond with ONLY a JSON object (no markdown code blocks):
 
 {
-  "action": "existing_ticket" | "new_bug" | "not_a_bug" | "needs_info",
+  "action": "existing_ticket" | "new_bug" | "not_a_bug" | "needs_info" | "defer",
   "explanation": "Brief explanation for the Slack reply (1-2 sentences, friendly tone)",
   "confidence": "high" | "medium" | "low",
   "ticketLink": "https://linear.app/... (only if action is existing_ticket)",
@@ -90,12 +136,15 @@ Respond with ONLY a JSON object (no markdown code blocks, no explanation outside
   }
 }
 
-Notes:
+## Decision Rules
+
 - Only include "ticketLink" if action is "existing_ticket"
 - Only include "newTicket" if action is "new_bug"
 - For priority: "urgent" = production down/data loss, "high" = blocking users, "medium" = annoying but workaround exists, "low" = minor issue
-- Be concise in the explanation - it will be posted to Slack
-- If confidence is "low", err on the side of "needs_info"`;
+- **If you're unsure, use "defer"** - this is the safe default
+- **If confidence is not "high", do NOT use "new_bug"** - use "defer" instead
+- **Do NOT ask for more info unless the message is completely incomprehensible**
+- Most #bug-hunt messages are ambiguous - defer is usually correct`;
 }
 
 /**
@@ -119,7 +168,7 @@ function parseResponse(responseText: string): TriageDecision {
     }
 
     // Validate action
-    const validActions = ['existing_ticket', 'new_bug', 'not_a_bug', 'needs_info'];
+    const validActions = ['existing_ticket', 'new_bug', 'not_a_bug', 'needs_info', 'defer'];
     if (!validActions.includes(parsed.action)) {
       throw new Error(`Invalid action: ${parsed.action}`);
     }

@@ -92,10 +92,14 @@ function formatSlackReply(decision: TriageDecision, ticketUrl?: string): string 
     case 'needs_info':
       reply = `❓ ${decision.explanation}`;
       break;
+
+    case 'defer':
+      reply = `👀 ${decision.explanation}\n\n_A human will review this and follow up._`;
+      break;
   }
 
-  // Add confidence indicator for low confidence decisions
-  if (decision.confidence === 'low') {
+  // Add confidence indicator for low confidence decisions (but not for defer, which is already uncertain)
+  if (decision.confidence === 'low' && decision.action !== 'defer') {
     reply += '\n\n_(Low confidence - please verify this assessment)_';
   }
 
