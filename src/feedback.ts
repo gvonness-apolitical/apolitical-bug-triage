@@ -7,6 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { TriageDecision } from './triage.js';
+import { logDebug } from './utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -70,8 +71,8 @@ export class FeedbackManager {
       if (existsSync(this.correctionsPath)) {
         return JSON.parse(readFileSync(this.correctionsPath, 'utf8'));
       }
-    } catch {
-      // Ignore errors
+    } catch (err) {
+      logDebug('Failed to load corrections file, starting fresh', err);
     }
     return {
       corrections: [],
@@ -84,8 +85,8 @@ export class FeedbackManager {
       if (existsSync(this.historyPath)) {
         return JSON.parse(readFileSync(this.historyPath, 'utf8'));
       }
-    } catch {
-      // Ignore errors
+    } catch (err) {
+      logDebug('Failed to load history file, starting fresh', err);
     }
     return {
       logs: [],

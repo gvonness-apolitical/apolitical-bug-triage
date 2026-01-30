@@ -17,6 +17,7 @@ import { SlackClient, ReporterProfileManager, type SlackMessage } from './slack.
 import { LinearClient, getPriorityNumber } from './linear.js';
 import { triageBug, extractKeywords, type TriageDecision } from './triage.js';
 import { FeedbackManager } from './feedback.js';
+import { meetsConfidenceThreshold, logDebug, setVerboseLogging } from './utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE_FILE = join(__dirname, '..', '.last-run');
@@ -31,7 +32,6 @@ program
   .option('--channel <id>', 'Override Slack channel ID')
   .option('--model <model>', 'Claude model to use', defaultConfig.claudeModel)
   .option('--limit <n>', 'Maximum messages to process', '10')
-  .option('--log-file <path>', 'Log decisions for shadow analysis')
   .option('--min-confidence <level>', 'Only act on decisions at or above this confidence', 'low')
   .parse();
 
@@ -50,8 +50,8 @@ function loadLastRunTimestamp(): number {
       const content = readFileSync(STATE_FILE, 'utf8');
       return parseFloat(content.trim());
     }
-  } catch {
-    // Ignore errors
+  } catch (err) {
+    logDebug('Failed to read state file, using default timestamp', err);
   }
 
   // Default to 1 hour ago
@@ -107,17 +107,6 @@ function formatSlackReply(decision: TriageDecision, ticketUrl?: string): string 
   }
 
   return reply;
-}
-
-/**
- * Check if a confidence level meets the minimum threshold.
- */
-function meetsConfidenceThreshold(
-  actual: 'high' | 'medium' | 'low',
-  minimum: string
-): boolean {
-  const levels = { high: 3, medium: 2, low: 1 };
-  return levels[actual] >= (levels[minimum as keyof typeof levels] ?? 1);
 }
 
 /**
@@ -248,6 +237,9 @@ async function main(): Promise<void> {
     dryRun: options.dryRun ?? false,
     verbose: options.verbose ?? false,
   };
+
+  // Enable verbose logging if requested
+  setVerboseLogging(config.verbose);
 
   if (config.dryRun) {
     console.log('\n⚠️  DRY RUN MODE - No writes will be made\n');

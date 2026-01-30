@@ -28,7 +28,6 @@ export interface Config {
 }
 
 // Default configuration
-// TODO: These IDs need to be filled in from your Linear workspace
 export const defaultConfig: Omit<Config, 'dryRun' | 'verbose'> = {
   slackChannelId: 'C3W35V43D', // #bug-hunt
   linearTeams: {

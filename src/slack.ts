@@ -6,6 +6,7 @@ import { WebClient } from '@slack/web-api';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { logDebug, logWarn } from './utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -65,8 +66,8 @@ export class SlackClient {
           message_ts: msg.ts,
         });
         permalink = linkResult.permalink;
-      } catch {
-        // Ignore permalink errors
+      } catch (err) {
+        logDebug(`Failed to get permalink for message ${msg.ts}`, err);
       }
 
       messages.push({
@@ -88,7 +89,8 @@ export class SlackClient {
     try {
       const result = await this.client.users.info({ user: userId });
       return result.user?.real_name ?? result.user?.name ?? userId;
-    } catch {
+    } catch (err) {
+      logDebug(`Failed to get user name for ${userId}, using ID`, err);
       return userId;
     }
   }
@@ -114,7 +116,8 @@ export class SlackClient {
         }
       }
       return false;
-    } catch {
+    } catch (err) {
+      logDebug(`Failed to check triage replies for thread ${threadTs}`, err);
       return false;
     }
   }
@@ -161,7 +164,8 @@ export class SlackClient {
         });
       }
       return messages;
-    } catch {
+    } catch (err) {
+      logDebug(`Failed to get recent channel context for ${channelId}`, err);
       return [];
     }
   }
@@ -192,7 +196,8 @@ export class SlackClient {
         });
       }
       return messages;
-    } catch {
+    } catch (err) {
+      logDebug(`Failed to get thread replies for ${threadTs}`, err);
       return [];
     }
   }
@@ -214,7 +219,8 @@ export class SlackClient {
       ];
 
       return engineeringKeywords.some(kw => title.includes(kw));
-    } catch {
+    } catch (err) {
+      logDebug(`Failed to check if user ${userId} is an engineer`, err);
       return false;
     }
   }
@@ -238,8 +244,8 @@ export class ReporterProfileManager {
       if (existsSync(this.cachePath)) {
         return JSON.parse(readFileSync(this.cachePath, 'utf8'));
       }
-    } catch {
-      // Ignore errors
+    } catch (err) {
+      logWarn('Failed to load reporter profile cache, starting fresh', err);
     }
     return {
       profiles: {},
