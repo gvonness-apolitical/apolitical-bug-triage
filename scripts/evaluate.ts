@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 import { requireCredential } from '../src/keychain.js';
 import { LinearClient } from '../src/linear.js';
-import { triageBug, type TriageDecision } from '../src/triage.js';
+import { triageBug, type TriageDecision, type PromptVersion, getDefaultPromptVersion } from '../src/triage.js';
 import { defaultConfig, type Config } from '../src/config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -66,6 +66,7 @@ function parseArgs(): {
   caseId: string | null;
   skipUnlabeled: boolean;
   output: string;
+  promptVersion: PromptVersion;
 } {
   const args = process.argv.slice(2);
   let model = 'claude-opus-4-5-20251101';
@@ -73,6 +74,7 @@ function parseArgs(): {
   let caseId: string | null = null;
   let skipUnlabeled = false;
   let output = 'test-data/eval-results.md';
+  let promptVersion: PromptVersion = getDefaultPromptVersion();
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--model' && args[i + 1]) {
@@ -85,10 +87,17 @@ function parseArgs(): {
       skipUnlabeled = true;
     } else if (args[i] === '--output' && args[i + 1]) {
       output = args[++i];
+    } else if (args[i] === '--prompt-version' && args[i + 1]) {
+      const v = args[++i];
+      if (v === 'v1' || v === 'v2') {
+        promptVersion = v;
+      } else {
+        console.warn(`Unknown prompt version: ${v}, using default`);
+      }
     }
   }
 
-  return { model, limit, caseId, skipUnlabeled, output };
+  return { model, limit, caseId, skipUnlabeled, output, promptVersion };
 }
 
 async function main(): Promise<void> {
@@ -97,6 +106,7 @@ async function main(): Promise<void> {
   console.log('Bug Triage Evaluator');
   console.log('====================');
   console.log(`Model: ${opts.model}`);
+  console.log(`Prompt version: ${opts.promptVersion}`);
 
   // Load test cases
   const casesPath = join(__dirname, '..', 'test-data', 'test-cases.json');
@@ -168,7 +178,8 @@ async function main(): Promise<void> {
           reporter: testCase.reporter,
           existingIssues,
         },
-        config
+        config,
+        { promptVersion: opts.promptVersion }
       );
 
       // Compare results
@@ -212,7 +223,7 @@ async function main(): Promise<void> {
   }
 
   // Generate report
-  const report = generateReport(results, opts.model);
+  const report = generateReport(results, opts.model, opts.promptVersion);
   const outputPath = join(__dirname, '..', opts.output);
   writeFileSync(outputPath, report);
   console.log(`\nReport written to ${opts.output}`);
@@ -223,7 +234,7 @@ async function main(): Promise<void> {
   console.log(`\nSummary: ${correct.length}/${labeled.length} correct (${labeled.length > 0 ? Math.round((correct.length / labeled.length) * 100) : 0}%)`);
 }
 
-function generateReport(results: EvalResult[], model: string): string {
+function generateReport(results: EvalResult[], model: string, promptVersion: PromptVersion): string {
   const now = new Date().toISOString();
   const labeled = results.filter((r) => r.actionMatch !== null);
   const correct = labeled.filter((r) => r.actionMatch === true);
@@ -233,6 +244,7 @@ function generateReport(results: EvalResult[], model: string): string {
 
 **Generated:** ${now}
 **Model:** ${model}
+**Prompt Version:** ${promptVersion}
 **Cases:** ${results.length} total, ${labeled.length} labeled
 **Accuracy:** ${correct.length}/${labeled.length} (${accuracy}%)
 

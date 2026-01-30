@@ -45,7 +45,7 @@ interface TestCase {
     url: string;
   }>;
   expected: {
-    action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info' | null;
+    action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info' | 'defer' | null;
     team?: 'platform' | 'enterprise' | 'ai' | 'data' | null;
     confidence?: 'high' | 'medium' | 'low' | null;
     notes?: string;
@@ -58,7 +58,7 @@ interface TestCasesFile {
 }
 
 interface LabelSuggestion {
-  action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info';
+  action: 'existing_ticket' | 'new_bug' | 'not_a_bug' | 'needs_info' | 'defer';
   team?: 'platform' | 'enterprise' | 'ai' | 'data';
   confidence: 'high' | 'medium' | 'low';
   reasoning: string;
@@ -70,12 +70,14 @@ function parseArgs(): {
   apply: boolean;
   model: string;
   minReplies: number;
+  relabel: boolean;
 } {
   const args = process.argv.slice(2);
   let limit = 10;
   let apply = false;
   let model = 'claude-sonnet-4-20250514';
   let minReplies = 1;
+  let relabel = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--limit' && args[i + 1]) {
@@ -86,10 +88,12 @@ function parseArgs(): {
       model = args[++i];
     } else if (args[i] === '--min-replies' && args[i + 1]) {
       minReplies = parseInt(args[++i], 10);
+    } else if (args[i] === '--relabel') {
+      relabel = true;
     }
   }
 
-  return { limit, apply, model, minReplies };
+  return { limit, apply, model, minReplies, relabel };
 }
 
 function buildPrompt(testCase: TestCase): string {
@@ -105,9 +109,9 @@ function buildPrompt(testCase: TestCase): string {
       .join('\n\n');
   }
 
-  return `You are analyzing a bug report from a Slack channel to determine how it was resolved.
+  return `You are creating training labels for a bug triage bot. The bot will see ONLY the original message (not the thread replies). You need to determine what action the bot SHOULD take based on what a reasonable triage decision would be.
 
-## Original Bug Report
+## Original Bug Report (this is what the bot will see)
 
 **Reporter:** ${testCase.reporter}
 **Date:** ${testCase.date ?? 'Unknown'}
@@ -115,21 +119,41 @@ function buildPrompt(testCase: TestCase): string {
 **Message:**
 ${testCase.message}
 
-## Thread Replies (${replies.length} total)
+## Thread Replies (for your context only - the bot won't see these)
 
 ${threadText || 'No replies'}
 
 ## Your Task
 
-Based on the original message AND the thread discussion, determine the outcome of this bug report.
+Based on the ORIGINAL MESSAGE ALONE, what should a triage bot do? Use the thread replies to understand what the RIGHT answer turned out to be, but label based on what's reasonable given just the initial message.
 
-Possible outcomes:
-1. **existing_ticket** - The issue was identified as a duplicate or related to an existing Linear ticket
-2. **new_bug** - A new Linear ticket was created for this issue
-3. **not_a_bug** - The issue was determined to not be a bug (feature request, user error, expected behavior, support question)
-4. **needs_info** - More information was requested and the issue remains unresolved
+### Actions:
 
-If the outcome is "new_bug", also determine which team should own it:
+1. **new_bug** - The original message clearly describes a technical bug with enough detail:
+   - Error messages, broken functionality, unexpected behavior
+   - Enough context to create a useful ticket
+   - NOT just a question or request for help
+
+2. **existing_ticket** - The message clearly describes something that matches an existing issue
+   (Note: bot will have Linear search results to reference)
+
+3. **not_a_bug** - The message is CLEARLY one of:
+   - Feature request ("it would be nice if...")
+   - Support question ("how do I...")
+   - User asking for help with their specific account
+   - Something explicitly described as expected behavior
+
+4. **needs_info** - The message is too vague to act on - missing key details
+
+5. **defer** - The message is AMBIGUOUS. Use this when:
+   - Could be a bug OR a support issue - can't tell from the message
+   - Could be user error OR a real problem
+   - The thread shows it needed clarification to resolve
+   - A human would need to ask questions to decide
+
+   This is the label for "reasonable to not take action automatically"
+
+If the action is "new_bug", also determine which team should own it:
 - **platform**: Infrastructure, auth, performance, databases, deployments
 - **enterprise**: Academies, cohorts, admin, B2B, SSO
 - **ai**: AI features, Futura, learning tracks, AI feedback
@@ -138,19 +162,14 @@ If the outcome is "new_bug", also determine which team should own it:
 Respond with ONLY a JSON object (no markdown code blocks):
 
 {
-  "action": "existing_ticket" | "new_bug" | "not_a_bug" | "needs_info",
+  "action": "existing_ticket" | "new_bug" | "not_a_bug" | "needs_info" | "defer",
   "team": "platform" | "enterprise" | "ai" | "data" | null,
   "confidence": "high" | "medium" | "low",
-  "reasoning": "Brief explanation of why you chose this outcome (1-2 sentences)",
+  "reasoning": "Brief explanation (1-2 sentences)",
   "ticketRef": "APO-123 or null if no ticket mentioned"
 }
 
-Important:
-- Look for ticket references (APO-XXX, PLA-XXX, etc.) in the thread
-- Look for phrases like "created ticket", "this is tracked in", "duplicate of"
-- Look for resolutions like "fixed", "deployed", "not a bug", "expected behavior"
-- If the thread shows the issue was resolved but no ticket was explicitly created, use your judgment
-- If you're unsure, use "medium" or "low" confidence`;
+Key principle: If the thread shows that clarification was needed to resolve this, the label should probably be "defer" or "needs_info" - because the original message alone wasn't enough.`;
 }
 
 function parseResponse(text: string): LabelSuggestion | null {
@@ -165,7 +184,7 @@ function parseResponse(text: string): LabelSuggestion | null {
     const parsed = JSON.parse(jsonStr);
 
     // Validate
-    const validActions = ['existing_ticket', 'new_bug', 'not_a_bug', 'needs_info'];
+    const validActions = ['existing_ticket', 'new_bug', 'not_a_bug', 'needs_info', 'defer'];
     if (!validActions.includes(parsed.action)) {
       return null;
     }
@@ -190,7 +209,7 @@ async function main(): Promise<void> {
   console.log(`Model: ${opts.model}`);
   console.log(`Limit: ${opts.limit}`);
   console.log(`Min replies: ${opts.minReplies}`);
-  console.log(`Mode: ${opts.apply ? 'APPLY' : 'preview'}\n`);
+  console.log(`Mode: ${opts.apply ? 'APPLY' : 'preview'}${opts.relabel ? ' (RELABEL ALL)' : ''}\n`);
 
   const casesPath = join(__dirname, '..', 'test-data', 'test-cases.json');
   if (!existsSync(casesPath)) {
@@ -201,13 +220,19 @@ async function main(): Promise<void> {
   const testFile: TestCasesFile = JSON.parse(readFileSync(casesPath, 'utf8'));
   const anthropic = new Anthropic({ apiKey: requireCredential('ANTHROPIC_API_KEY') });
 
-  // Filter to unlabeled cases with sufficient replies
-  let toProcess = testFile.cases.filter(
-    (c) =>
-      c.expected.action === null &&
-      c.threadReplies &&
-      c.threadReplies.length >= opts.minReplies
-  );
+  // Filter cases based on options
+  let toProcess = testFile.cases.filter((c) => {
+    // Must have sufficient replies
+    if (!c.threadReplies || c.threadReplies.length < opts.minReplies) {
+      return false;
+    }
+    // If relabeling, include all historical cases (skip synthetic)
+    if (opts.relabel) {
+      return c.source === 'historical';
+    }
+    // Otherwise, only unlabeled cases
+    return c.expected.action === null;
+  });
 
   toProcess = toProcess.slice(0, opts.limit);
 
