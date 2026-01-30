@@ -4,7 +4,6 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { Config } from './config.js';
-import { teamKeywords } from './config.js';
 import type { LinearIssue } from './linear.js';
 import type { ReporterProfile } from './slack.js';
 
@@ -422,7 +421,7 @@ function buildPrompt(context: TriageContext, version: PromptVersion = 'v2'): str
 /**
  * Parse Claude's response into a TriageDecision.
  */
-function parseResponse(responseText: string): TriageDecision {
+export function parseResponse(responseText: string): TriageDecision {
   // Try to extract JSON from the response
   let jsonStr = responseText.trim();
 
@@ -558,25 +557,6 @@ export function extractKeywords(message: string): string {
 
   // Return top keywords (limit to avoid overly broad search)
   return words.slice(0, 8).join(' ');
-}
-
-/**
- * Suggest a team based on message keywords.
- */
-export function suggestTeam(
-  message: string
-): 'platform' | 'enterprise' | 'ai' | 'data' | null {
-  const lowerMessage = message.toLowerCase();
-
-  for (const [team, keywords] of Object.entries(teamKeywords)) {
-    for (const keyword of keywords) {
-      if (lowerMessage.includes(keyword)) {
-        return team as 'platform' | 'enterprise' | 'ai' | 'data';
-      }
-    }
-  }
-
-  return null;
 }
 
 /**

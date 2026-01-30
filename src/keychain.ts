@@ -4,6 +4,7 @@
  */
 
 import { execSync } from 'node:child_process';
+import { logDebug } from './utils.js';
 
 const KEYCHAIN_ACCOUNT = 'claude';
 
@@ -14,7 +15,8 @@ export function getKeychainCredential(name: string): string | null {
       { encoding: 'utf8' }
     );
     return result.trim();
-  } catch {
+  } catch (err) {
+    logDebug(`Keychain lookup failed for ${name}, will try environment variable`, err);
     return null;
   }
 }
