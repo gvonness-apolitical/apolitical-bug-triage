@@ -172,6 +172,136 @@
         "confidence": "medium",
         "notes": "Valid bug report even without seeing the screenshot"
       }
+    },
+    {
+      "id": "synth-question-framing",
+      "source": "synthetic",
+      "message": "Have we changed something on the homepage? The banner looks different.",
+      "reporter": "Product Manager",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "defer",
+        "team": null,
+        "confidence": "medium",
+        "notes": "Question framing indicates uncertainty - should defer"
+      }
+    },
+    {
+      "id": "synth-caching-issue",
+      "source": "synthetic",
+      "message": "I published an article 30 minutes ago but it's not showing on the homepage yet.",
+      "reporter": "Content Editor",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "defer",
+        "team": null,
+        "confidence": "medium",
+        "notes": "Caching/publishing issue - could be expected behavior, should defer"
+      }
+    },
+    {
+      "id": "synth-single-user",
+      "source": "synthetic",
+      "message": "A learner is experiencing issues accessing the course module. They can see the course but can't open any lessons.",
+      "reporter": "Support",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "defer",
+        "team": null,
+        "confidence": "medium",
+        "notes": "Single user issue - could be account-specific, should defer"
+      }
+    },
+    {
+      "id": "synth-time-bounded-outage",
+      "source": "synthetic",
+      "message": "Platform has been slow for multiple users since 9am this morning. Pages taking 10+ seconds to load.",
+      "reporter": "QA",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "high",
+        "notes": "Time-bounded outage affecting multiple users - clear new_bug"
+      }
+    },
+    {
+      "id": "synth-behavioral-violation",
+      "source": "synthetic",
+      "message": "Users are receiving course reminder emails for courses they already completed last week.",
+      "reporter": "Support",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "data",
+        "confidence": "high",
+        "notes": "Clear behavioral violation - receiving emails they shouldn't"
+      }
+    },
+    {
+      "id": "synth-same-issue-reference",
+      "source": "synthetic",
+      "message": "Same login issue as discussed above - still happening for enterprise users.",
+      "reporter": "Support",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "defer",
+        "team": null,
+        "confidence": "medium",
+        "notes": "References previous context we don't have - should defer"
+      }
+    },
+    {
+      "id": "synth-platform-community",
+      "source": "synthetic",
+      "message": "The communities feed on the main site isn't showing new posts. Last update was 3 days ago.",
+      "reporter": "Community Manager",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "platform",
+        "confidence": "high",
+        "notes": "Main site communities = platform team"
+      }
+    },
+    {
+      "id": "synth-enterprise-community",
+      "source": "synthetic",
+      "message": "The GAIC academy forum isn't loading for cohort members. Just shows a spinner.",
+      "reporter": "Academy Admin",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "enterprise",
+        "confidence": "high",
+        "notes": "Academy-specific forum = enterprise team"
+      }
+    },
+    {
+      "id": "synth-enterprise-poll",
+      "source": "synthetic",
+      "message": "Poll deletion isn't working in the admin panel. Click delete and nothing happens.",
+      "reporter": "Academy Admin",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "new_bug",
+        "team": "enterprise",
+        "confidence": "high",
+        "notes": "Polls are always enterprise features"
+      }
+    },
+    {
+      "id": "synth-external-service",
+      "source": "synthetic",
+      "message": "Contentful is giving us errors when publishing content. Not sure if it's us or them?",
+      "reporter": "Content Editor",
+      "mockLinearResults": [],
+      "expected": {
+        "action": "defer",
+        "team": null,
+        "confidence": "medium",
+        "notes": "External service + uncertainty - should defer for investigation"
+      }
     }
   ]
 }

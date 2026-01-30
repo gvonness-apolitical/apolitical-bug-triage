@@ -30,3 +30,9 @@ npm-debug.log*
 coverage/
 
 # Test data is git-crypt encrypted (see .gitattributes)
+
+# Runtime data (reporter profiles, feedback, etc.)
+data/
+
+# Claude
+.claude

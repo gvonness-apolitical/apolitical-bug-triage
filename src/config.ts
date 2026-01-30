@@ -71,6 +71,22 @@ export const teamKeywords: Record<string, string[]> = {
     'authentication',
     'openfga',
     'authorization',
+    // UI/UX and general platform features
+    'homepage',
+    'feed',
+    'carousel',
+    'login',
+    'password reset',
+    'signup',
+    'events page',
+    'search',
+    'articles page',
+    'topic page',
+    'notifications',
+    'email templates',
+    // Communities on main platform
+    'communities feed',
+    'main site communities',
   ],
   enterprise: [
     'academy',
@@ -84,6 +100,18 @@ export const teamKeywords: Record<string, string[]> = {
     'white-label',
     'sso',
     'saml',
+    // Academy-specific communities
+    'academy community',
+    'cohort community',
+    'academy forum',
+    'gaic',
+    // Enterprise-specific features
+    'poll',
+    'quiz',
+    'course discussion',
+    'enrollment module',
+    'admin dashboard',
+    'cohort management',
   ],
   ai: [
     'ai',
@@ -109,5 +137,13 @@ export const teamKeywords: Record<string, string[]> = {
     'metrics',
     'data pipeline',
     'etl',
+    // Email tracking and automation
+    'email tracking',
+    'email automation',
+    'course reminders',
+    'nudge emails',
+    'recurring emails',
+    'hubspot sync',
+    'email sending',
   ],
 };
